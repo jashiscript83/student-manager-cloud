@@ -16,6 +16,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -52,24 +54,78 @@ public class StudentServiceImpl implements StudentService{
 		}
 
 		CompletableFuture.allOf(deptFuture, subjectsFuture).join();
-
+        setOwner(student);
 		return studentRepository.save(student);
 	}
 	
 	public Student getStudentbyId(String id) {
 
-		return studentRepository.findById(id)
-				.orElseThrow(() -> new RuntimeException("Student not found with id: " + id));
+		Student student =
+				studentRepository.findById(id)
+						.orElseThrow(
+								() -> new RuntimeException(
+										"Student not found with id: " + id
+								)
+						);
+
+		allowUpdatAndDelete(student);
+
+		return student;
+
 	}
 	
-	public List<Student> getAllStudents() {
-		return studentRepository.findAll();
-	}
-	
-	public Student updateStudent (Student student) {
+	public List<Student> getAllStudents(){
+
+	Authentication auth =
+			SecurityContextHolder
+					.getContext()
+					.getAuthentication();
+
+    return studentRepository.findByOwnerId(
+			auth.getName()
+			);
+
+
+}
+
+	public Student updateStudent(Student student) {
+
+		allowUpdatAndDelete(student);
+
+		if (Objects.nonNull(student.getDepartment())) {
+
+			Department department =
+					departmentRepository.save(
+							student.getDepartment()
+					);
+
+			student.setDepartment(department);
+		}
+
+		if (Objects.nonNull(student.getSubjects())
+				&& !student.getSubjects().isEmpty()) {
+
+			List<Subject> subjects =
+					subjectRepository.saveAll(
+							student.getSubjects()
+					);
+
+			student.setSubjects(subjects);
+		}
+
+		Student existing =
+				studentRepository.findById(
+						student.getId()
+				).orElseThrow(
+						() -> new RuntimeException("Student not found")
+				);
+
+		student.setOwnerId(
+				existing.getOwnerId()
+		);
+
 		return studentRepository.save(student);
-	}
-	public Department updateDepartment (Department department) {
+	}	public Department updateDepartment (Department department) {
 		return departmentRepository.save(department);
 	}
 	public Subject updateSubject (Subject subject) {
@@ -83,6 +139,8 @@ public class StudentServiceImpl implements StudentService{
 		if (!optionalStudent.isPresent()) {
 			return "Student not found";
 		}
+		allowUpdatAndDelete(optionalStudent.get());
+
 
 		Student student = optionalStudent.get();
 
@@ -147,5 +205,43 @@ public class StudentServiceImpl implements StudentService{
 	public List<Student> nameStartsWith (String name) {
 		return studentRepository.findByNameStartsWith(name);
 	}
-	
+
+
+	private void setOwner (Student student){
+
+		Authentication auth =
+				SecurityContextHolder
+						.getContext()
+						.getAuthentication();
+
+		student.setOwnerId(
+				auth.getName()
+		);
+
+	}
+
+	private void allowUpdatAndDelete(Student student){
+
+		Student existing =
+				studentRepository.findById(
+						student.getId()
+				).orElseThrow(
+						() -> new RuntimeException("Student not found")
+				);
+
+		Authentication auth =
+				SecurityContextHolder
+						.getContext()
+						.getAuthentication();
+
+		if (!existing.getOwnerId()
+				.equals(auth.getName())) {
+
+			throw new RuntimeException(
+					"Unauthorized"
+			);
+		}
+
+	}
+
 }

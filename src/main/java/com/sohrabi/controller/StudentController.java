@@ -6,6 +6,9 @@ import com.sohrabi.entity.Department;
 import com.sohrabi.entity.Student;
 import com.sohrabi.entity.Subject;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import com.sohrabi.service.StudentServiceImpl;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,8 +19,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.sohrabi.service.StudentServiceImpl;
 
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/student")
 public class StudentController {

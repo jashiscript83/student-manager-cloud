@@ -26,4 +26,6 @@ public interface StudentRepository extends MongoRepository<Student, String> {
 	List<Student> findByEmailIsLike (String email);
 	
 	List<Student> findByNameStartsWith (String name);
+	List<Student> findByOwnerId(String ownerId);
+
 }

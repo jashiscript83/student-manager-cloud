@@ -14,6 +14,8 @@ public class Student {
 	@Id
 	private String id;
 
+	private String ownerId;
+
 	private String name;
 
 	@Field(name = "mail")
@@ -83,4 +85,11 @@ public class Student {
 		this.percentage = percentage;
 	}
 
+	public String getOwnerId() {
+		return ownerId;
+	}
+
+	public void setOwnerId(String ownerId) {
+		this.ownerId = ownerId;
+	}
 }
