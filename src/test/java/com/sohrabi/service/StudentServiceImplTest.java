@@ -14,6 +14,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Arrays;
@@ -66,6 +68,20 @@ class StudentServiceImplTest {
         student.setEmail("test@test.com");
         student.setDepartment(dept);
         student.setSubjects(Arrays.asList(sub));
+
+
+        UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(
+                        "test-user",
+                        null
+                );
+
+        SecurityContextHolder
+                .getContext()
+                .setAuthentication(auth);
+
+        student.setOwnerId("test-user");
+
     }
 
 
@@ -161,14 +177,26 @@ class StudentServiceImplTest {
 
     @Test
     void updateStudent_shouldCallRepository() {
-        when(studentRepository.save(student)).thenReturn(student);
 
-        Student result = studentService.updateStudent(student);
+        when(studentRepository.findById("student1"))
+                .thenReturn(Optional.of(student));
+
+        when(studentRepository.save(student))
+                .thenReturn(student);
+
+        when(departmentRepository.save(any()))
+                .thenReturn(student.getDepartment());
+
+        when(subjectRepository.saveAll(any()))
+                .thenReturn(student.getSubjects());
+
+        Student result =
+                studentService.updateStudent(student);
 
         verify(studentRepository).save(student);
+
         Assertions.assertEquals(student, result);
     }
-
 
     @Test
     void getStudentsByName() {
